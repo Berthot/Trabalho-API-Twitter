@@ -1,72 +1,86 @@
-from __future__ import absolute_import, print_function
-
 from tweepy.streaming import StreamListener
-from tweepy import OAuthHandler
-from tweepy import Stream
 import json
+from time import strftime, localtime, time
+
 
 save = open('salvando_dados.txt', 'w')
-contador = open('contador.txt', 'w')
-
-
-
 
 
 class AssinanteTwitter(StreamListener):
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, tempo=30):
+        self.start_time = time()
+        self.end_time = tempo
+
+        self.time_stamp = strftime("%d-%m-%Y %H:%M:%S - Curitiba, Brazil", localtime())  # Hora e data real
+
+        self.salva_dados(f"INICIO COLETA DE TWEETS- {self.time_stamp}")
+
         self.lol = 0
         self.mine = 0
         self.pubg = 0
         self.dota = 0
         self.csgo = 0
         self.freefire = 0
+        super().__init__()  # Inicializador da classe pai
 
-    def search(self, lista):
-        i = lista.lower()
+    def cronometro(self):  # Retorna o tempo decorrido
+        return time() - self.start_time
 
-        if i.find('league of legends') != -1:
+    def search(self, tweet):
+        tweet = tweet.lower()
+
+        if 'league of legends' in tweet:
             self.lol += 1
-        if i.find('minecraft') != -1:
+        if 'minecraft' in tweet:
             self.mine += 1
-        if i.find('pubg') != -1:
+        if 'pubg' in tweet:
             self.pubg += 1
-        if i.find('dota') != -1:
+        if 'dota' in tweet:
             self.dota += 1
-        if i.find('csgo') != -1:
+        if 'csgo' in tweet:
             self.csgo += 1
-        if i.find('ff') != -1:
+        if any(jogo in tweet for jogo in ['free fire', 'free fire']):  # Procura pelos 2 termos
             self.freefire += 1
 
-    def salva(self):
-        contador.write(f"|LOL - {self.lol} |MINE - {self.mine} |PUBG - {self.pubg} |DOTA - {self.dota} |CSGO - {self.csgo} |FF - {self.freefire} \n \n")
+    def salva_json(self):
 
+        # Lendo o json
+        with open('contador.json') as file:
+            data = json.load(file)
+
+        # Modificando o json
+        data["lol"] = self.lol
+        data["mine"] = self.mine
+        data["pubg"] = self.pubg
+        data["lol"] = self.dota
+        data["dota"] = self.csgo
+        data["ff"] = self.freefire
+
+        # Salvando o json
+        with open('contador.json', "w") as file:
+            json.dump(data, file, indent=4)
+
+    def salva_dados(self, conteudo):
+        with open('salvando_dados.txt', 'a+') as file:
+            head = "-" * 140
+            file.write(f"{conteudo}\n{head}\n")
+
+    # Função de loop pelos tweets
     def on_data(self, data):
-        conteudoJSON = json.loads(data)
-        dados = conteudoJSON["text"]
-        print(dados)
-        save.write(dados + '\n')
-        self.search(dados)
-        self.salva()
-        return True
+        if self.cronometro() < self.end_time: # Testa se ainda não passou o tempo limete
+            conteudoJSON = json.loads(data)
+            dados = conteudoJSON["text"]
+            print(dados)
+            self.salva_dados(dados)
+            self.search(dados)
+            self.salva_json()
+            return True
+        else:
+            self.salva_json()
+            return False
 
     # Essa função será invocada automaticamente toda vez que ocorrer um erro
     def on_error(self, status):
         print(status)
-
-print("Inicio do programa")
-consumer_key="NLaisEh7x2RXCLsMd1H5c7EQe"
-consumer_secret="Zej68qEjbbNsgkN5w8VY1LlZRhHnGbBcWFUIXDeV6x5yfLeuJf"
-
-
-access_token="1163572452615708674-27nY8JFuviOPTkLLuXHXNUp1wDeUBz"
-access_token_secret="bnQ97UZdy7B6IhOtvPvtXu6swonCTFw6MIMsaOb9CZvsV"
-
-assinante = AssinanteTwitter()
-auth = OAuthHandler(consumer_key, consumer_secret)
-auth.set_access_token(access_token, access_token_secret)
-
-stream = Stream(auth, assinante)
-stream.filter(track=['league of legends', 'dota', 'minecraft', 'csgo', 'freefire', 'pubg'], languages=["pt"])
 
