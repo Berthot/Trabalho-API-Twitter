@@ -16,7 +16,7 @@ if __name__ == '__main__':
     access_token = "1163572452615708674-27nY8JFuviOPTkLLuXHXNUp1wDeUBz"
     access_token_secret = "bnQ97UZdy7B6IhOtvPvtXu6swonCTFw6MIMsaOb9CZvsV"
 
-    assinante = AssinanteTwitter(tempo=40)  # Definir tempo aqui
+    assinante = AssinanteTwitter(tempo=800)  # Definir tempo aqui
     auth = OAuthHandler(consumer_key, consumer_secret)
     auth.set_access_token(access_token, access_token_secret)
 

@@ -3,7 +3,7 @@ import json
 from time import strftime, localtime, time
 
 
-save = open('salvando_dados.txt', 'w')
+save = open('salvando_dados.txt', 'a+')
 
 
 class AssinanteTwitter(StreamListener):
